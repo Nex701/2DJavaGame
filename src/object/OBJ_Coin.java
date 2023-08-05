@@ -1,22 +1,17 @@
 package object;
 
-import java.io.IOException;
 
-import javax.imageio.ImageIO;
+import entity.Entity;
+import main.GamePanel;
 
-public class OBJ_Coin extends SuperObject {
+public class OBJ_Coin extends Entity {
 
-	public OBJ_Coin() {
-		
+	
+	public OBJ_Coin(GamePanel gp) {
+		super(gp);
 		name = "Coin";
-		
-		try {
-			
-			image = ImageIO.read(getClass().getResourceAsStream("/genesis_tiles/Tile_ID_447.png"));
-			
-		}catch(IOException e) {
-			e.printStackTrace();
-		}
+		down1 = setup("/genesis_tiles/Tile_ID_447");
+
 		
 	}
 }

@@ -3,11 +3,14 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 
 import javax.swing.JPanel;
 
+import entity.Entity;
 import entity.Player;
-import object.SuperObject;
 import tile.MapLayer2;
 import tile.MapLayer3;
 import tile.TileManager;
@@ -37,17 +40,29 @@ public class GamePanel extends JPanel implements Runnable{
 	TileManager tileM = new TileManager(this);
 	MapLayer2 mapLayer2 = new MapLayer2(this, tileM.tile);
 	MapLayer3 mapLayer3 = new MapLayer3(this, tileM.tile);
-	KeyHandler keyH = new KeyHandler();
+	public KeyHandler keyH = new KeyHandler(this);
 	Sound music = new Sound();
 	Sound se = new Sound();	
 	public CollisionChecker cChecker = new CollisionChecker(this);
 	public AssetSetter aSetter = new AssetSetter(this);
 	public UI ui = new UI(this);
+	public EventHandler eHandler = new EventHandler(this);
 	Thread gameThread;
 	
 	//ENTITY AND OBJECTS
 	public Player player = new Player(this, keyH);
-	public SuperObject obj[] = new SuperObject[40]; //x slots for objects being displayed at a time
+	public Entity obj[] = new Entity[40]; //x slots for objects being displayed at a time
+	public Entity npc[] = new Entity[10];
+	public Entity monster[] = new Entity[25];
+	ArrayList<Entity> entityList = new ArrayList<>();
+	
+	
+	//GAME STATE
+	public int gameState;
+	public final int titleState = 0;
+	public final int playState = 1;
+	public final int pauseState = 2;
+	public final int dialogueState = 3;
 	
 	public GamePanel() {
 		
@@ -62,8 +77,9 @@ public class GamePanel extends JPanel implements Runnable{
 	public void setupGame () {
 		
 		aSetter.setObject();
-		
-		playMusic(0);
+		aSetter.setNPC();
+		aSetter.setMonster();
+		gameState = titleState;
 	
 	}
 
@@ -100,14 +116,30 @@ public class GamePanel extends JPanel implements Runnable{
 			if(timer >= 1000000000) {
 				drawCount = 0;
 				timer = 0;
-				//Displays FPS
 			}
 			
 		}
 	}
 	public void update() {
 		
-		player.update();
+		if(gameState == playState) {
+			//PLAYER
+			player.update();
+			//NPC
+			for(int i = 0; i< npc.length; i++) {
+				if(npc[i] != null) {
+					npc[i].update();
+				}
+			}
+			for(int i = 0; i < monster.length; i++ ) {
+				if(monster[i] != null) {
+					monster[i].update();
+				}
+			}
+		}
+		if(gameState == pauseState) {
+			
+		}
 	}
 	
 	public void paintComponent(Graphics g) {
@@ -115,20 +147,70 @@ public class GamePanel extends JPanel implements Runnable{
 		super.paintComponent(g);
 		Graphics2D g2 = (Graphics2D)g;
 		
-		//MAP LAYERS AND PLAYER
-		tileM.draw(g2);
-		mapLayer2.draw(g2);
-		for(int i=0;i<obj.length;i++) {
-			if(obj[i] != null) {
-				obj[i].draw(g2, this);
-			}
+		//DEBUG
+		long drawStart = 0;
+		if(keyH.checkDrawTime == true) {
+			drawStart = System.nanoTime();
 		}
-		//PLAYER
-		player.draw(g2);
-		//MAP LAYERS
-		mapLayer3.draw(g2);
-		//UI
-		ui.draw(g2);
+		
+		//TITLE SCREEN
+		if(gameState == titleState) {
+			ui.draw(g2);
+		}
+		//OTHERS
+		else {
+
+			//MAP LAYERS
+			tileM.draw(g2);
+			mapLayer2.draw(g2);
+			//ADD ENTITYS TO ENTITY LIST
+			entityList.add(player);
+			for(int i = 0; i < npc.length; i++) {
+				if(npc[i] != null) {
+					entityList.add(npc[i]);
+				}
+			}
+			for(int i = 0; i < obj.length; i++) {
+				if(obj[i] != null) {
+					entityList.add(obj[i]);
+				}
+			}
+			for(int i = 0; i < monster.length; i++) {
+				if(monster[i] != null) {
+					entityList.add(monster[i]);
+				}
+			}
+			//SORT
+			Collections.sort(entityList, new Comparator<Entity>() {
+
+				@Override
+				public int compare(Entity e1, Entity e2) {
+					
+					int result = Integer.compare(e1.worldY, e2.worldY); 
+					return result;
+				}
+				
+			});
+			
+			//DRAW ENTITIES
+			for(int i = 0; i < entityList.size(); i++) {
+				entityList.get(i).draw(g2);
+			}
+			entityList.clear();
+			mapLayer3.draw(g2);
+			//UI
+			ui.draw(g2);
+		}
+			
+		//DEBUG
+			if(keyH.checkDrawTime == true) {
+				long drawEnd = System.nanoTime();
+				long passed = drawEnd - drawStart;
+				g2.setColor(Color.white);
+				g2.drawString("Draw Time:" + passed, 10, 400);
+				System.out.println("Draw Time: "+ passed);
+		}
+		
 		g2.dispose();
 	}
 	public void playMusic(int i) {

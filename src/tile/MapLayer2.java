@@ -72,7 +72,7 @@ public void loadMap(String filepath) {
                     worldY + gp.tileSize > gp.player.worldY - gp.player.screenY &&
                     worldY - gp.tileSize < gp.player.worldY + gp.player.screenY) {
 
-                g2.drawImage(layer2Tile[layer2TileNum].image, screenX, screenY, gp.tileSize, gp.tileSize, null);
+                g2.drawImage(layer2Tile[layer2TileNum].image, screenX, screenY, null);
             }
 
             worldCol++;

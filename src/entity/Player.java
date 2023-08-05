@@ -1,36 +1,46 @@
 package entity;
 
-import java.awt.Color;
+import java.awt.AlphaComposite;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
-import java.io.IOException;
-
-import javax.imageio.ImageIO;
-
 import main.GamePanel;
 import main.KeyHandler;
+import main.UtilityTool;
 import object.OBJ_Chest1;
+import object.OBJ_ChestOpen;
 
 public class Player extends Entity {
-	GamePanel gp;
 	KeyHandler keyH;
-	
 	public final int screenX;
 	public final int screenY;
 	
 	public int hasKey = 0;
 	public int hasCoin = 0;
 	
+	private BufferedImage[] walkUpImages = new BufferedImage[6];
+    private BufferedImage[] walkDownImages = new BufferedImage[6];
+    private BufferedImage[] walkLeftImages = new BufferedImage[6];
+    public BufferedImage[] walkRightImages = new BufferedImage[6];
+    private BufferedImage[] attackUpImages = new BufferedImage[4];
+    private BufferedImage[] attackDownImages = new BufferedImage[4];
+    private BufferedImage[] attackLeftImages = new BufferedImage[4];
+    private BufferedImage[] attackRightImages = new BufferedImage[4];
+    
+    //USED FOR PLAYER ANIMATIONS
+    private final int BASE_ANIMATION_SPEED = 12;
+    private int frameCounter = 0;
+    private final int maxFrames = 6; // Adjust this based on the number of frames for walking animations
+    
 	public Player(GamePanel gp, KeyHandler keyH) {
 		
-		this.gp = gp;
+		super(gp);
 		this.keyH = keyH;
 		
 		screenX = gp.screenWidth/2 - (gp.tileSize/2);
 		screenY = gp.screenHeight/2 - (gp.tileSize/2);
 		
-		solidArea = new Rectangle(16, 24, 16, 20);
+		solidArea = new Rectangle(10, 10, 28, 34);
 		solidAreaDefaultX = solidArea.x;
 		solidAreaDefaultY = solidArea.y;
 		
@@ -40,35 +50,47 @@ public class Player extends Entity {
 	}
 	public void setDefaultValues() {
 		
-		worldX =  59 * gp.tileSize;
-		worldY =  83 * gp.tileSize;;
+		worldX =  55 * gp.tileSize;
+		worldY =  75 * gp.tileSize;;
 		speed = 4;
 		direction = "down";
+		
+		//PLAYER STATUS
+		maxLife = 6;
+		life = maxLife;
 	}
 	public void getPlayerImage() {
-		try {
-			
-			up1 = ImageIO.read(getClass().getResourceAsStream("/player/player_up_1.png"));
-			up2 = ImageIO.read(getClass().getResourceAsStream("/player/player_up_2.png"));
-			down1 = ImageIO.read(getClass().getResourceAsStream("/player/player_down_1.png"));
-			down2 = ImageIO.read(getClass().getResourceAsStream("/player/player_down_2.png"));
-			left1 = ImageIO.read(getClass().getResourceAsStream("/player/player_left_1.png"));
-			left2 = ImageIO.read(getClass().getResourceAsStream("/player/player_left_2.png"));
-			right1 = ImageIO.read(getClass().getResourceAsStream("/player/player_right_1.png"));
-			right2 = ImageIO.read(getClass().getResourceAsStream("/player/player_right_2.png"));
-			idleUp = ImageIO.read(getClass().getResourceAsStream("/player/player_up_idle.png"));
-			idleDown = ImageIO.read(getClass().getResourceAsStream("/player/player_down_idle.png"));
-			idleLeft = ImageIO.read(getClass().getResourceAsStream("/player/player_left_idle.png"));
-			idleRight = ImageIO.read(getClass().getResourceAsStream("/player/player_right_idle.png"));
-			
-		}catch(IOException e) {
-			e.printStackTrace();
-		}
-	}
-	//update method gets called 60times per second.
-	public void update() {
 		
-		if(keyH.upPressed == true || keyH.downPressed == true || keyH.leftPressed == true || keyH.rightPressed == true) {
+		UtilityTool uTool = new UtilityTool();
+
+	    for (int i = 0; i < 6; i++) {
+	        walkUpImages[i] = uTool.scaleImage(setupImage("/player/up_0" + i), 128, 128);
+	        walkDownImages[i] = uTool.scaleImage(setupImage("/player/down_0" + i), 128, 128);
+	        walkLeftImages[i] = uTool.scaleImage(setupImage("/player/left_0" + i), 128, 128);
+	        walkRightImages[i] = uTool.scaleImage(setupImage("/player/right_0" + i), 128, 128);
+	    }
+
+	    for (int i = 0; i < 4; i++) {
+	        attackUpImages[i] = uTool.scaleImage(setupImage("/player/attacku_0" + i), 128, 128);
+	        attackDownImages[i] = uTool.scaleImage(setupImage("/player/attackd_0" + i), 128, 128);
+	        attackLeftImages[i] = uTool.scaleImage(setupImage("/player/attackl_0" + i), 128, 128);
+	        attackRightImages[i] = uTool.scaleImage(setupImage("/player/attackr_0" + i), 128, 128);
+	    }
+
+	    idleUp = uTool.scaleImage(setupImage("/player/idle_up"), 128, 128);
+	    idleDown = uTool.scaleImage(setupImage("/player/idle_down"), 128, 128);
+	    idleLeft = uTool.scaleImage(setupImage("/player/idle_left"), 128, 128);
+	    idleRight = uTool.scaleImage(setupImage("/player/idle_right"), 128, 128);
+	}
+	public void update() {
+		//DEV SPEED BOOST
+		if(keyH.kPressed == true) {
+			speed += 1;
+			System.out.println("Speed+1");
+			keyH.kPressed = false;
+		}
+		
+		if(keyH.upPressed == true || keyH.downPressed == true || keyH.leftPressed == true || keyH.rightPressed == true || keyH.ePressed == true) {
 		
 		if(keyH.upPressed == true) {
 			direction = "up";
@@ -90,9 +112,22 @@ public class Player extends Entity {
 		// CHECK OBJECT COLLISION
 		int objIndex = gp.cChecker.checkObject(this, true);
 		pickUpObject(objIndex);
+		//OBJECT INTERACTION DISTANCE
+		interactObject();
+		
+		//CHECK NPC COLLISION
+		gp.cChecker.checkEntity(this, gp.npc);
+		interactNPC();
+		
+		//CHECK MONSTER COLLISION
+		int monsterIndex = gp.cChecker.checkEntity(this, gp.monster);
+		contactMonster(monsterIndex);
+		//CHECK EVENT
+		gp.eHandler.checkEvent();
+		gp.keyH.ePressed = false;
 		
 		//IF COLLISION IS FALSE, PLAYER CAN MOVE
-		if(collisionOn == false) {
+		if(collisionOn == false && keyH.ePressed == false) {
 			
 			switch(direction) {
 			case "up": worldY -= speed; break;
@@ -101,17 +136,28 @@ public class Player extends Entity {
 			case "right": worldX += speed; break;
 			}
 		}
-		spriteCounter++;
-		if(spriteCounter > 12) {
-			if(spriteNum == 1) {
-				spriteNum = 2;
-			}
-			else if(spriteNum == 2) {
-				spriteNum = 1;
-			}
-			spriteCounter = 0;
-		}
+
+		double animationSpeedAdjustment = 1.0 + 0.33 * (speed - 1);
+	    int animationSpeed = (int) (BASE_ANIMATION_SPEED / animationSpeedAdjustment);
+	    spriteCounter++;
+	    if (spriteCounter > animationSpeed) {
+	        frameCounter++;
+	        if (frameCounter >= maxFrames) {
+	            frameCounter = 0;
+	        }
+	        spriteCounter = 0;
+	    }
+	    
 	}
+		//KEEP OUTSIDE OF KEYH STATEMENTS
+	    if (invincible == true) {
+	    	invincibleCounter++;
+	    	if(invincibleCounter > 60) {
+	    		invincible = false;
+	    		invincibleCounter = 0;
+	    	}
+	    }
+	    
 		if(keyH.upPressed == false && keyH.downPressed == false && keyH.leftPressed == false && keyH.rightPressed == false) {
 			
 			if(direction == "down") {
@@ -138,81 +184,122 @@ public class Player extends Entity {
 			
 			switch(objectName) {
 			case "Key":
-					gp.playSE(2);
+					gp.playSE(9);
 					hasKey++;
 					gp.obj[i] = null;
 					gp.ui.showMessage("+1 Key");
 				break;
-			case "Door":
-				
-				break;
-			case "Dev_skull":
-					speed += 5;
-					gp.obj[i] = null;
-					System.out.println("Speed+5");
-				break;
 			case "Coin":
-				gp.playSE(2);
+				gp.playSE(9);
 				hasCoin++;
 				gp.obj[i] = null;
 				gp.ui.showMessage("+1 Coin");
 			break;
-			case "Chest1":
-				if (hasKey > 0) {
-				gp.playSE(2);
-				hasKey--;
-				hasKey++;
-				hasCoin += 2;
-				gp.ui.showMessage("+1 Key");
-		        gp.ui.showMessage("+1 Coin");
-		        gp.ui.showMessage("+1 Coin");
-		        gp.obj[i] = null;
-		    }break;
 			}
 			
 			}
 			
 		}
-
 	
-	public void draw(Graphics2D g2) {
+	//ADDS AN INVISABLE RANGE TO OBJECTS TO ALLOW FOR INTERACTION AT A DISTANCE
+	public void interactObject() {
 		
+		int objIndex = gp.cChecker.checkInteraction(this, gp.obj);
+		if (objIndex != 999) {
+			
+			String objectName = gp.obj[objIndex].name;
+			
+			//System.out.println(canInteract);
+			
+	        if (gp.keyH.ePressed) {
+	        	switch(objectName) {
+				case "Door":
+					
+					break;
+				case "Chest1":
+					if(hasKey < 1) {
+						gp.gameState = gp.dialogueState;
+						gp.ui.currentDialogue = "You need a key to open this chest";
+					}
+					else if (hasKey > 0) {
+					gp.playSE(4);
+					hasKey--;
+					hasKey++;
+					hasCoin += 2;
+					gp.ui.showMessage("+1 Key");
+			        gp.ui.showMessage("+1 Coin");
+			        gp.ui.showMessage("+1 Coin");
+			        
+			        // Store the current position of the chest
+	                int chestX = gp.obj[objIndex].worldX;
+	                int chestY = gp.obj[objIndex].worldY;
+	                
+			        gp.obj[objIndex] = new OBJ_ChestOpen(gp);
+			        gp.obj[objIndex].worldX = chestX;
+	                gp.obj[objIndex].worldY = chestY;
+                    }break;
+			        
+					}
+				}
+	            
+	        }
+	    }
+	
+	public void interactNPC() {
+	    // Check interaction with NPCs
+	    int npcIndex = gp.cChecker.checkInteraction(this, gp.npc);
+
+	    if (npcIndex != 999) {
+
+	        if (gp.keyH.ePressed) {
+	            gp.gameState = gp.dialogueState;
+	            gp.npc[npcIndex].speak();
+
+	            switch (direction) {
+	                case "up":
+	                    direction = "upIdle";
+	                    break;
+	                case "down":
+	                    direction = "downIdle";
+	                    break;
+	                case "left":
+	                    direction = "leftIdle";
+	                    break;
+	                case "right":
+	                    direction = "rightIdle";
+	                    break;
+	            }
+	        }
+	    }
+	}
+	public void contactMonster(int i) {
+		
+		if(i !=999) {
+			
+			if(invincible == false) {
+				gp.playSE(13);
+				life -= 1;
+				invincible = true;
+			}
+		}
+	}
+	public void draw(Graphics2D g2) {
 		
 		BufferedImage image = null;
 		
 		switch(direction) {
 		case "up":
-			if(spriteNum == 1) {
-				image = up1;
-			}
-			if(spriteNum == 2) {
-				image = up2;
-			}
-			break;
-		case "down":
-			if(spriteNum == 1) {
-				image = down1;
-			}
-			if(spriteNum == 2) {
-				image = down2;
-			}
-			break;
-		case "left":
-			if(spriteNum == 1) {
-				image = left1;
-			}
-			if(spriteNum == 2) {
-				image = left2;
-			}
-			break;
-		case "right":
-			if(spriteNum ==1) {
-				image = right1;
-			}
-			if(spriteNum == 2) {
-				image = right2;
-			}
-			break;
+            image = walkUpImages[frameCounter];
+            break;
+        case "down":
+            image = walkDownImages[frameCounter];
+            break;
+        case "left":
+            image = walkLeftImages[frameCounter];
+            break;
+        case "right":
+            image = walkRightImages[frameCounter];
+            break;
 		case "rightIdle":
 			if(spriteNum == 1 || spriteNum == 2) {
 			image = idleRight;
@@ -234,7 +321,17 @@ public class Player extends Entity {
 			}
 			break;
 		}
-	
-		g2.drawImage(image, screenX, screenY, gp.tileSize, gp.tileSize, null);
+		
+		if(invincible == true) {
+			g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.3f));;
+		}
+		
+		g2.drawImage(image, screenX-41, screenY-64, null);
+		//RESET ALPHA
+		g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f));;
+		
+		//PLAYER HITBOX DEBUG
+		//g2.setColor(Color.RED);
+	    //g2.fillRect(screenX + solidArea.x, screenY + solidArea.y, solidArea.width, solidArea.height);
 	}
 }

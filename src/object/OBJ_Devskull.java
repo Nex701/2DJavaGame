@@ -1,22 +1,15 @@
 package object;
 
-import java.io.IOException;
+import entity.Entity;
+import main.GamePanel;
 
-import javax.imageio.ImageIO;
+public class OBJ_Devskull extends Entity {
 
-public class OBJ_Devskull extends SuperObject {
-
-	public OBJ_Devskull() {
-		
+	
+	public OBJ_Devskull(GamePanel gp) {
+		super(gp);
 		name = "Dev_skull";
-		
-		try {
-			
-			image = ImageIO.read(getClass().getResourceAsStream("/genesis_tiles/Tile_ID_494.png"));
-			
-		}catch(IOException e) {
-			e.printStackTrace();
-		}
-		
+		down1 = setup("/genesis_tiles/Tile_ID_494");
+
 	}
 }

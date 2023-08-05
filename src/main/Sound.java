@@ -16,7 +16,19 @@ public class Sound {
 	
 		soundURL[0] = getClass().getResource("/sound/DayTime.wav");
 		soundURL[1] = getClass().getResource("/sound/NightTime.wav");
-		soundURL[2] = getClass().getResource("/sound/KeySoundEffect.wav");
+		soundURL[2] = getClass().getResource("sound/KeySoundEffect.wav");
+		soundURL[3] = getClass().getResource("/sound/sound02.wav");
+		soundURL[4] = getClass().getResource("/sound/sound03.wav");
+		soundURL[5] = getClass().getResource("/sound/sound04.wav");
+		soundURL[6] = getClass().getResource("/sound/sound05.wav");
+		soundURL[7] = getClass().getResource("/sound/sound06.wav");
+		soundURL[8] = getClass().getResource("/sound/sound07.wav");
+		soundURL[9] = getClass().getResource("/sound/sound08.wav");
+		soundURL[10] = getClass().getResource("/sound/sound09.wav");
+		soundURL[11] = getClass().getResource("/sound/sound01.wav");
+		soundURL[12] = getClass().getResource("/sound/GameplayMusic.wav");
+		soundURL[13] = getClass().getResource("/sound/damage01.wav");
+		soundURL[14] = getClass().getResource("/sound/damage02.wav");
 	}
 	
 	public void setFile(int i) {
