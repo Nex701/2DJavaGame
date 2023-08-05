@@ -77,7 +77,7 @@ public class EventHandler {
 	public void damagePit(int col, int row, int gameState) {
 		
 		gp.gameState = gameState;
-		gp.ui.currentDialogue = "you fall into a pit!";
+		gp.ui.currentDialogue = "You tripped and took 1 Damage!!";
 		gp.player.life -= 1;
 		//eventRect[col][row].eventDone = true;
 		canTouchEvent = false;

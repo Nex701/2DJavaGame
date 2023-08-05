@@ -224,9 +224,7 @@ public class Player extends Entity {
 					else if (hasKey > 0) {
 					gp.playSE(4);
 					hasKey--;
-					hasKey++;
 					hasCoin += 2;
-					gp.ui.showMessage("+1 Key");
 			        gp.ui.showMessage("+1 Coin");
 			        gp.ui.showMessage("+1 Coin");
 			        

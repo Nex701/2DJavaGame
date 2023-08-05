@@ -98,7 +98,7 @@ public class NPC_Cat1 extends Entity {
 
         g2.setFont(interactionFont);
         g2.setColor(Color.YELLOW);
-        int textX = screenX + 17;
+        int textX = screenX + 15;
         int textY = screenY + 8;
         g2.drawString("Talk \'E\'", textX, textY);
 		}

@@ -99,9 +99,9 @@ public class NPC_Wizard extends Entity {
             // Draw 'E' above
             g2.setFont(interactionFont);
             g2.setColor(Color.YELLOW);
-            int textX = screenX + 64;
+            int textX = screenX + 28;
             int textY = screenY + 16;
-            g2.drawString("E", textX, textY);
+            g2.drawString("Talk \'E\'", textX, textY);
             }
 	}
 }
