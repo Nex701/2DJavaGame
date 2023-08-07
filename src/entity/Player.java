@@ -6,8 +6,6 @@ import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 import main.GamePanel;
 import main.KeyHandler;
-import main.UtilityTool;
-import object.OBJ_Chest1;
 import object.OBJ_ChestOpen;
 
 public class Player extends Entity {
@@ -31,6 +29,7 @@ public class Player extends Entity {
     private final int BASE_ANIMATION_SPEED = 12;
     private int frameCounter = 0;
     private final int maxFrames = 6; // Adjust this based on the number of frames for walking animations
+    private int attackCounter = 0;
     
 	public Player(GamePanel gp, KeyHandler keyH) {
 		
@@ -44,9 +43,13 @@ public class Player extends Entity {
 		solidAreaDefaultX = solidArea.x;
 		solidAreaDefaultY = solidArea.y;
 		
+		attackArea.width = 48;
+		attackArea.height = 48;
+		
 		
 		setDefaultValues();
 		getPlayerImage();
+		getPlayerAttackImage();
 	}
 	public void setDefaultValues() {
 		
@@ -60,8 +63,6 @@ public class Player extends Entity {
 		life = maxLife;
 	}
 	public void getPlayerImage() {
-		
-		UtilityTool uTool = new UtilityTool();
 
 	    for (int i = 0; i < 6; i++) {
 	        walkUpImages[i] = uTool.scaleImage(setupImage("/player/up_0" + i), 128, 128);
@@ -70,17 +71,19 @@ public class Player extends Entity {
 	        walkRightImages[i] = uTool.scaleImage(setupImage("/player/right_0" + i), 128, 128);
 	    }
 
+	    idleUp = uTool.scaleImage(setupImage("/player/idle_up"), 128, 128);
+	   	idleDown = uTool.scaleImage(setupImage("/player/idle_down"), 128, 128);
+	   	idleLeft = uTool.scaleImage(setupImage("/player/idle_left"), 128, 128);
+	   	idleRight = uTool.scaleImage(setupImage("/player/idle_right"), 128, 128);
+	}   
+	
+	public void getPlayerAttackImage() {
 	    for (int i = 0; i < 4; i++) {
 	        attackUpImages[i] = uTool.scaleImage(setupImage("/player/attacku_0" + i), 128, 128);
 	        attackDownImages[i] = uTool.scaleImage(setupImage("/player/attackd_0" + i), 128, 128);
 	        attackLeftImages[i] = uTool.scaleImage(setupImage("/player/attackl_0" + i), 128, 128);
 	        attackRightImages[i] = uTool.scaleImage(setupImage("/player/attackr_0" + i), 128, 128);
 	    }
-
-	    idleUp = uTool.scaleImage(setupImage("/player/idle_up"), 128, 128);
-	    idleDown = uTool.scaleImage(setupImage("/player/idle_down"), 128, 128);
-	    idleLeft = uTool.scaleImage(setupImage("/player/idle_left"), 128, 128);
-	    idleRight = uTool.scaleImage(setupImage("/player/idle_right"), 128, 128);
 	}
 	public void update() {
 		//DEV SPEED BOOST
@@ -90,8 +93,14 @@ public class Player extends Entity {
 			keyH.kPressed = false;
 		}
 		
-		if(keyH.upPressed == true || keyH.downPressed == true || keyH.leftPressed == true || keyH.rightPressed == true || keyH.ePressed == true) {
+		if(keyH.spacePressed == true ) { 
+			playerAttackCounter();
+		}
 		
+		else if(keyH.upPressed == true || keyH.downPressed == true || keyH.leftPressed == true || keyH.rightPressed == true || keyH.ePressed == true) {
+			
+		attacking = false;
+			
 		if(keyH.upPressed == true) {
 			direction = "up";
 		}
@@ -124,8 +133,8 @@ public class Player extends Entity {
 		contactMonster(monsterIndex);
 		//CHECK EVENT
 		gp.eHandler.checkEvent();
-		gp.keyH.ePressed = false;
 		
+	
 		//IF COLLISION IS FALSE, PLAYER CAN MOVE
 		if(collisionOn == false && keyH.ePressed == false) {
 			
@@ -137,6 +146,8 @@ public class Player extends Entity {
 			}
 		}
 
+		gp.keyH.ePressed = false;
+		
 		double animationSpeedAdjustment = 1.0 + 0.33 * (speed - 1);
 	    int animationSpeed = (int) (BASE_ANIMATION_SPEED / animationSpeedAdjustment);
 	    spriteCounter++;
@@ -149,16 +160,8 @@ public class Player extends Entity {
 	    }
 	    
 	}
-		//KEEP OUTSIDE OF KEYH STATEMENTS
-	    if (invincible == true) {
-	    	invincibleCounter++;
-	    	if(invincibleCounter > 60) {
-	    		invincible = false;
-	    		invincibleCounter = 0;
-	    	}
-	    }
-	    
-		if(keyH.upPressed == false && keyH.downPressed == false && keyH.leftPressed == false && keyH.rightPressed == false) {
+		 
+		if(keyH.upPressed == false && keyH.downPressed == false && keyH.leftPressed == false && keyH.rightPressed == false && keyH.spacePressed == false) {
 			
 			if(direction == "down") {
 				direction = "downIdle";
@@ -173,6 +176,14 @@ public class Player extends Entity {
 				direction = "rightIdle";
 		}
 	}
+		//KEEP OUTSIDE OF KEYH STATEMENTS
+	    if (invincible == true) {
+	    	invincibleCounter++;
+	    	if(invincibleCounter > 60) {
+	    		invincible = false;
+	    		invincibleCounter = 0;
+	    	}
+	    }
 		
 }
 	
@@ -270,6 +281,60 @@ public class Player extends Entity {
 	        }
 	    }
 	}
+	public void playerAttackCounter() {
+		 
+		boolean startAttackAnimation = false;
+		if (!attacking && !startAttackAnimation) {
+	        gp.playSE(17);
+	        startAttackAnimation = true;
+	    }
+			attacking = true; 
+	        spriteCounter++;
+	        if (spriteCounter > 9/2) {
+	        	attackCounter++;
+	        	if(attackCounter == 2 && attackCounter < 4) {
+	        		//STORE CURRENT VALUES 
+	        		int currentWorldX = worldX;
+	        		int currentWorldY = worldY;
+	        		int solidAreaWidth = solidArea.width;
+	        		int solidAreaHeight = solidArea.height;
+	        		
+	        		//ADJUST PLAYERS WORLDX/Y FOR THE ATTACK AREA
+	        		switch(direction) {
+	        		case "up": worldY -= attackArea.height; break;
+	        		case "upIdle": worldY -= attackArea.height; break;
+	        		case "down": worldY += attackArea.height; break;
+	        		case "downIdle": worldY += attackArea.height; break;
+	        		case "left": worldX -= attackArea.width; break;
+	        		case "leftIdle": worldX -= attackArea.width; break;
+	        		case "right": worldX += attackArea.width; break;
+	        		case "rightIdle": worldX += attackArea.width; break;
+	        		}
+	        		//ATTACK AREA BECOMES SOLID AREA
+	        		solidArea.width = attackArea.width;
+	        		solidArea.height = attackArea.height;
+	        		//CHECK MONSTER COLLISION WITHIN THE UPDATED WORLDX/Y AND SOLIDAREA
+	        		int monsterIndex = gp.cChecker.checkEntity(this, gp.monster);
+	        		damageMonster(monsterIndex);
+	        		
+	        		//RESTORE WORLD X/Y AND SOLID AREA
+	        		worldX = currentWorldX;
+	        		worldY = currentWorldY;
+	        		solidArea.width = solidAreaWidth;
+	        		solidArea.height = solidAreaHeight;
+	        		
+	        	}
+	            if (attackCounter >= 4) {
+	            	attackCounter = 0;
+	                attacking = false;
+	                gp.keyH.spacePressed = false;
+	                startAttackAnimation = false;
+	            }
+	            spriteCounter = 0;
+	        }
+	        
+		
+	}
 	public void contactMonster(int i) {
 		
 		if(i !=999) {
@@ -281,47 +346,68 @@ public class Player extends Entity {
 			}
 		}
 	}
+	public void damageMonster(int i) {
+		
+		if (i != 999) {
+			
+			if(gp.monster[i].invincible == false) {
+					if(gp.monster[i].name == "Green Slime") {gp.playSE(15);}
+				gp.monster[i].life --;
+				gp.monster[i].invincible = true;
+				//gp.monster[i].damageReaction();
+				
+				if(gp.monster[i].life <= 0) {
+					gp.monster[i].dying = true;
+				}
+			}
+		
+		}
+	}
+	
 	public void draw(Graphics2D g2) {
 		
 		BufferedImage image = null;
 		
 		switch(direction) {
 		case "up":
-            image = walkUpImages[frameCounter];
+			if(attacking == false) {image = walkUpImages[frameCounter];}
+            if(attacking == true) {image = attackUpImages[attackCounter];}
             break;
         case "down":
-            image = walkDownImages[frameCounter];
+        	if(attacking == false) {image = walkDownImages[frameCounter];}
+        	if(attacking == true) {image = attackDownImages[attackCounter];}
             break;
         case "left":
-            image = walkLeftImages[frameCounter];
+        	if(attacking == false) {image = walkLeftImages[frameCounter];}
+        	if(attacking == true) {image = attackLeftImages[attackCounter];}
             break;
         case "right":
-            image = walkRightImages[frameCounter];
+        	if(attacking == false) {image = walkRightImages[frameCounter];}
+        	if(attacking == true) {image = attackRightImages[attackCounter];}
             break;
+        case "upIdle":
+			if(attacking == false) {image = idleUp;}
+			if(attacking == true) {image = attackUpImages[attackCounter];}
+			break;
+        case "downIdle":
+			if(attacking == false) {image = idleDown;}
+			if(attacking == true) {image = attackDownImages[attackCounter];}
+			break;
+        case "leftIdle":
+			if(attacking == false) {image = idleLeft;}
+			if(attacking == true) {image = attackLeftImages[attackCounter];}
+			break;	
 		case "rightIdle":
-			if(spriteNum == 1 || spriteNum == 2) {
-			image = idleRight;
-			}
+			if(attacking == false) {image = idleRight;}
+        	if(attacking == true) {image = attackRightImages[attackCounter];}
 			break;
-		case "leftIdle":
-			if(spriteNum == 1 || spriteNum == 2) {
-			image = idleLeft;
-			}
-			break;
-		case "upIdle":
-			if(spriteNum == 1 || spriteNum == 2) {
-			image = idleUp;
-			}
-			break;
-		case "downIdle":
-			if(spriteNum == 1 || spriteNum == 2) {
-			image = idleDown;
-			}
-			break;
+		
+		
+		
 		}
 		
 		if(invincible == true) {
-			g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.3f));;
+			g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.4f));;
 		}
 		
 		g2.drawImage(image, screenX-41, screenY-64, null);

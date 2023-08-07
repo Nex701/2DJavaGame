@@ -29,6 +29,9 @@ public class Sound {
 		soundURL[12] = getClass().getResource("/sound/GameplayMusic.wav");
 		soundURL[13] = getClass().getResource("/sound/damage01.wav");
 		soundURL[14] = getClass().getResource("/sound/damage02.wav");
+		soundURL[15] = getClass().getResource("/sound/slimehit.wav");
+		soundURL[16] = getClass().getResource("/sound/slimeDeath.wav");
+		soundURL[17] = getClass().getResource("/sound/swordSwing1.wav");
 	}
 	
 	public void setFile(int i) {

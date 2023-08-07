@@ -1,5 +1,6 @@
 package entity;
 import java.awt.image.BufferedImage;
+import java.awt.AlphaComposite;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics2D;
@@ -15,39 +16,50 @@ import main.UtilityTool;
 public class Entity {
 
 	protected GamePanel gp;
-	public int worldX;
-	public int worldY;
-	public int speed;
 	public BufferedImage up1, up2, down1, down2, left1, left2, right1, right2, idleUp, idleDown, idleLeft, idleRight;
-	public String direction = "down";
-	public int spriteCounter = 0;
-	public int spriteNum = 1;
-	public Rectangle solidArea = new Rectangle(0, 0, 48, 48);
-	public int solidAreaDefaultX, solidAreaDefaultY;
-	public boolean collisionOn = false;
-	public int actionLockCounter = 0;
-	public boolean invincible = false;
-	public int invincibleCounter = 0;
-	String dialogues[] = new String[30];
-	int dialogueIndex = 0;
+	public BufferedImage attackup, attackdown, attackleft, attackright;
 	public BufferedImage image, image2, image3;
-	public String name;
+	public Rectangle solidArea = new Rectangle(0, 0, 48, 48);
+	public Rectangle attackArea = new Rectangle(0, 0, 0, 0);
+	public int solidAreaDefaultX, solidAreaDefaultY;
 	public boolean collision = false;
-	public int type;// 0 = player, 1 = npc, 2 = monster
+	String dialogues[] = new String[30];
+	protected Font interactionFont = new Font("Arial", Font.BOLD, 12);
 	public UtilityTool uTool = new UtilityTool();
 	
-	//CHARACTER STATUS
+	//STATE
+	public int worldX, worldY;
+	public String direction = "down";
+	public int spriteNum = 1;
+	int dialogueIndex = 0;
+	public boolean collisionOn = false;
+	public boolean invincible = false;
+	protected boolean canInteract = false;
+	boolean attacking = false;
+	public boolean alive = true;
+	public boolean dying = false;
+	public boolean playDeathSound = false;
+	public boolean hpBarOn = false;
+	
+	//COUNTERS
+	public int spriteCounter = 0;
+	public int actionLockCounter = 0;
+	public int invincibleCounter = 0;
+	int dyingCounter = 0;
+	public int hpBarCounter = 0;
+	
+	//CHARACTER ATTIBUTES
+	public int type;// 0 = player, 1 = npc, 2 = monster
+	public String name;
 	public int maxLife;
 	public int life;
-	
-	//Variables to handle interaction
-    protected boolean canInteract = false;
-    protected Font interactionFont = new Font("Arial", Font.BOLD, 12);
-	
+	public int speed;
+
 	public Entity(GamePanel gp) {
 		this.gp = gp;
 	}
 	public void setCanInteract(boolean canInteract) {this.canInteract = canInteract;}
+	public void damageReaction() {}
 	public void setAction() {
 		
 		actionLockCounter ++;
@@ -134,6 +146,7 @@ public class Entity {
 		
 		if(this.type == 2 && contactPlayer == true) {
 			if(gp.player.invincible == false) {
+				gp.playSE(13);
 				gp.player.life -= 1;
 				gp.player.invincible = true;
 			}
@@ -148,16 +161,15 @@ public class Entity {
 			case "right": worldX += speed; break;
 			}
 		}
-		spriteCounter++;
-		if(spriteCounter > 12) {
-			if(spriteNum == 1) {
-				spriteNum = 2;
-			}
-			else if(spriteNum == 2) {
-				spriteNum = 1;
-			}
-			spriteCounter = 0;
-		}
+		
+		
+		if (invincible == true) {
+	    	invincibleCounter++;
+	    	if(invincibleCounter > 40) {
+	    		invincible = false;
+	    		invincibleCounter = 0;
+	    	}
+	    }
 	}
 	public void draw(Graphics2D g2) {
 		
@@ -172,63 +184,46 @@ public class Entity {
 
         	switch(direction) {
     		case "up":
-    			if(spriteNum == 1) {
-    				image = up1; 
-    			}
-    			if(spriteNum == 2) {
-    				image = up2;
-    			}
+    			if(spriteNum == 1) {image = up1;}
+    			if(spriteNum == 2) {image = up2;}
     			break;
     		case "down":
-    			if(spriteNum == 1) {
-    				image = down1;
-    			}
-    			if(spriteNum == 2) {
-    				image = down2;
-    			}
+    			if(spriteNum == 1) {image = down1;}
+    			if(spriteNum == 2) {image = down2;}
     			break;
     		case "left":
-    			if(spriteNum == 1) {
-    				image = left1;
-    			}
-    			if(spriteNum == 2) {
-    				image = left2;
-    			}
+    			if(spriteNum == 1) {image = left1;}
+    			if(spriteNum == 2) {image = left2;}
     			break;
     		case "right":
-    			if(spriteNum ==1) {
-    				image = right1;
-    			}
-    			if(spriteNum == 2) {
-    				image = right2;
-    			}
+    			if(spriteNum ==1) {image = right1;}
+    			if(spriteNum == 2) {image = right2;}
     			break;
     		case "rightIdle":
-    			if(spriteNum == 1 || spriteNum == 2) {
-    			image = idleRight;
-    			}
+    			if(spriteNum == 1 || spriteNum == 2) {image = idleRight;}
     			break;
     		case "leftIdle":
-    			if(spriteNum == 1 || spriteNum == 2) {
-    			image = idleLeft;
-    			}
+    			if(spriteNum == 1 || spriteNum == 2) {image = idleLeft;}
     			break;
     		case "upIdle":
-    			if(spriteNum == 1 || spriteNum == 2) {
-    			image = idleUp;
-    			}
+    			if(spriteNum == 1 || spriteNum == 2) {image = idleUp;}
     			break;
     		case "downIdle":
-    			if(spriteNum == 1 || spriteNum == 2) {
-    			image = idleDown;
-    			}
+    			if(spriteNum == 1 || spriteNum == 2) {image = idleDown;}
     			break;
     			
     		}
+        	
+        	if(invincible == true) {
+    			g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.4f));;
+    		}
+        	if(dying == true) {
+        		dyingAnimation(g2);
+        	}
  
         	g2.drawImage(image, screenX, screenY, null);
         	
-        	
+        	g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1f));;
         }
 	}
 	
@@ -259,26 +254,41 @@ public class Entity {
                 break;
         }
 
-     // Check if the new position is within the boundaries and no collision is detected
+        // Check if the new position is within the boundaries and no collision is detected
         if (!collisionOn && newX >= minX && newX + solidArea.width <= maxX && newY >= minY && newY + solidArea.height <= maxY) {
             // If within boundaries and no collision, update the position
             worldX = newX;
             worldY = newY;
         }
         
-        spriteCounter++;
-        if (spriteCounter > 12) {
-            if (spriteNum == 1) {
-                spriteNum = 2;
-            } else if (spriteNum == 2) {
-                spriteNum = 1;
-            }
-            spriteCounter = 0;
-        }
     }
+	
+	public void dyingAnimation(Graphics2D g2) {
+		
+		dyingCounter++;
+		
+		int i = 4;
+		
+		if(dyingCounter <= i) {changeAlpha(g2,0f);}
+		if(dyingCounter > i && dyingCounter <= i*2) {changeAlpha(g2,1f);}
+		if(dyingCounter > i*2 && dyingCounter <= i*3) {changeAlpha(g2,0f);}
+		if(dyingCounter > i*3 && dyingCounter <= i*4) {changeAlpha(g2,1f);}
+		if(dyingCounter > i*4 && dyingCounter <= i*5) {changeAlpha(g2,0f);}
+		if(dyingCounter > i*5 && dyingCounter <= i*6) {changeAlpha(g2,1f);}
+		if(dyingCounter > i*6 && dyingCounter <= i*7) {changeAlpha(g2,0f);}
+		if(dyingCounter > i*7 && dyingCounter <= i*8) {changeAlpha(g2,1f);}
+		if(dyingCounter > i*8) {
+			dying = false;
+			alive = false;
+			playDeathSound = false;
+		}
+	}
+	public void changeAlpha(Graphics2D g2, float alphaValue) {
+		
+		g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alphaValue));;
+	}
 	public BufferedImage setup(String imagePath) {
 		
-		UtilityTool uTool = new UtilityTool();
 		BufferedImage image = null;
 		
 		try {
@@ -289,9 +299,8 @@ public class Entity {
 		}
 		return image;
 	}
-	// Setup method for player images (x,x size)
+	// Setup method for images (x,x size)
     public BufferedImage setupImage(String imagePath) {
-        UtilityTool uTool = new UtilityTool();
         BufferedImage image = null;
 
         try {

@@ -32,7 +32,6 @@ public class NPC_Cat1 extends Entity {
 		maxY = gp.tileSize* 92;
 	}
 	public void getImage() {
-		UtilityTool uTool = new UtilityTool();
 		
 		up1 = uTool.scaleImage(setupImage("/playerNeko/player_up_1"), 64, 64);
 		up2 = uTool.scaleImage(setupImage("/playerNeko/player_up_2"), 64, 64);
@@ -52,6 +51,16 @@ public class NPC_Cat1 extends Entity {
 	public void update() {
 
 	       setnpcBoundaries(minX, minY, maxX, maxY);
+	       spriteCounter++;
+			if(spriteCounter > 12) {
+				if(spriteNum == 1) {
+					spriteNum = 2;
+				}
+				else if(spriteNum == 2) {
+					spriteNum = 1;
+				}
+				spriteCounter = 0;
+			}
 	    }
 	
 	public void setDialogue() {
@@ -77,7 +86,6 @@ public class NPC_Cat1 extends Entity {
         dialogues[18] = "They say the castle wizard has a magical staff. I have a magical 'paw', and it's just as powerful!";
         dialogues[19] = "Once, I chased a butterfly all the way to the castle gates. I guess you could say I'm a 'fur-ocious' explorer!";
         dialogues[20] = "What's a cat's favorite dessert? Mice cream!";
-        dialogues[21] = "What's a cat's favorite dessert? Mice cream!";
     	
     }
 	public void speak() {

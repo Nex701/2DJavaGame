@@ -5,7 +5,7 @@ import java.awt.event.KeyListener;
 public class KeyHandler implements KeyListener {
 
 	GamePanel gp;
-	public boolean upPressed, downPressed, leftPressed, rightPressed, ePressed, kPressed;
+	public boolean upPressed, downPressed, leftPressed, rightPressed, ePressed, kPressed, spacePressed;
 	//DEBUG
 	boolean checkDrawTime = false;
 	
@@ -38,7 +38,7 @@ public class KeyHandler implements KeyListener {
 			if(code == KeyEvent.VK_SPACE || code == KeyEvent.VK_ENTER) {
 				if (gp.ui.commandNum == 0) {
 					gp.gameState = gp.playState;
-					gp.playMusic(12);
+					//gp.playMusic(12);
 				}
 				if(gp.ui.commandNum == 1) {
 					//SAVE GAME
@@ -50,28 +50,16 @@ public class KeyHandler implements KeyListener {
 		}
 		
 		//PLAYSTATE
-		if(gp.gameState == gp.playState) {
-		if(code == KeyEvent.VK_W) {
-			upPressed = true;
-		}
-		if(code == KeyEvent.VK_A) {
-			leftPressed = true;
-		}
-		if(code == KeyEvent.VK_S) {
-			downPressed = true;
-		}
-		if(code == KeyEvent.VK_D) {
-			rightPressed = true;
-		}
-		if(code == KeyEvent.VK_P) {
-			gp.gameState = gp.pauseState;	
-		}
-		if(code == KeyEvent.VK_E) {
-			ePressed = true;	
-		}
-		if(code == KeyEvent.VK_K) {
-			kPressed = true;	
-		}
+		else if(gp.gameState == gp.playState) {
+		if(code == KeyEvent.VK_W) {upPressed = true;}
+		if(code == KeyEvent.VK_A) {leftPressed = true;}
+		if(code == KeyEvent.VK_S) {downPressed = true;}
+		if(code == KeyEvent.VK_D) {rightPressed = true;}
+		if(code == KeyEvent.VK_P) {gp.gameState = gp.pauseState;}
+		if(code == KeyEvent.VK_E) {ePressed = true;}
+		if(code == KeyEvent.VK_K) {kPressed = true;}
+		if(code == KeyEvent.VK_K) {kPressed = true;}
+		if(code == KeyEvent.VK_SPACE) {spacePressed = true;}
 		//RENDERING DEBUG
 		if(code == KeyEvent.VK_T) {
 			if(checkDrawTime == false) {

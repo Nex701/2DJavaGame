@@ -32,8 +32,6 @@ public class NPC_Wizard extends Entity {
 	}
 	public void getImage() {
 		
-		UtilityTool uTool = new UtilityTool();
-		
 		up1 = uTool.scaleImage(setupImage("/npc/up_01"), 96, 112);
 		up2 = uTool.scaleImage(setupImage("/npc/up_02"), 96, 112);
 		down1 = uTool.scaleImage(setupImage("/npc/down_01"), 96, 112);
@@ -53,6 +51,16 @@ public class NPC_Wizard extends Entity {
 	public void update() {
 
        setnpcBoundaries(minX, minY, maxX, maxY);
+       spriteCounter++;
+		if(spriteCounter > 12) {
+			if(spriteNum == 1) {
+				spriteNum = 2;
+			}
+			else if(spriteNum == 2) {
+				spriteNum = 1;
+			}
+			spriteCounter = 0;
+		}
     }
 	
 	public void setDialogue() {
